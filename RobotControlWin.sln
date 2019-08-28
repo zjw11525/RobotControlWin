@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.28917.181
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RobotControlWin", "RobotControlWin\RobotControlWin.csproj", "{D3A8B5DD-76C3-4147-8E94-BFECB278612E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MQTTServer", "MQTTServer\MQTTServer.csproj", "{4EBBA70E-0313-4C55-9EA8-7D98BF0D1532}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{D3A8B5DD-76C3-4147-8E94-BFECB278612E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D3A8B5DD-76C3-4147-8E94-BFECB278612E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D3A8B5DD-76C3-4147-8E94-BFECB278612E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4EBBA70E-0313-4C55-9EA8-7D98BF0D1532}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4EBBA70E-0313-4C55-9EA8-7D98BF0D1532}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4EBBA70E-0313-4C55-9EA8-7D98BF0D1532}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4EBBA70E-0313-4C55-9EA8-7D98BF0D1532}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

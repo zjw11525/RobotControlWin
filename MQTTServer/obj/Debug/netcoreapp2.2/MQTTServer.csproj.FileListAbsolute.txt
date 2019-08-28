@@ -1,0 +1,11 @@
+C:\Users\Administrator\Desktop\RobotControlWin\MQTTServer\bin\Debug\netcoreapp2.2\MQTTServer.deps.json
+C:\Users\Administrator\Desktop\RobotControlWin\MQTTServer\bin\Debug\netcoreapp2.2\MQTTServer.runtimeconfig.json
+C:\Users\Administrator\Desktop\RobotControlWin\MQTTServer\bin\Debug\netcoreapp2.2\MQTTServer.runtimeconfig.dev.json
+C:\Users\Administrator\Desktop\RobotControlWin\MQTTServer\bin\Debug\netcoreapp2.2\MQTTServer.dll
+C:\Users\Administrator\Desktop\RobotControlWin\MQTTServer\obj\Debug\netcoreapp2.2\MQTTServer.csprojAssemblyReference.cache
+C:\Users\Administrator\Desktop\RobotControlWin\MQTTServer\obj\Debug\netcoreapp2.2\MQTTServer.csproj.CoreCompileInputs.cache
+C:\Users\Administrator\Desktop\RobotControlWin\MQTTServer\obj\Debug\netcoreapp2.2\MQTTServer.AssemblyInfoInputs.cache
+C:\Users\Administrator\Desktop\RobotControlWin\MQTTServer\obj\Debug\netcoreapp2.2\MQTTServer.AssemblyInfo.cs
+C:\Users\Administrator\Desktop\RobotControlWin\MQTTServer\bin\Debug\netcoreapp2.2\MQTTServer.pdb
+C:\Users\Administrator\Desktop\RobotControlWin\MQTTServer\obj\Debug\netcoreapp2.2\MQTTServer.dll
+C:\Users\Administrator\Desktop\RobotControlWin\MQTTServer\obj\Debug\netcoreapp2.2\MQTTServer.pdb
