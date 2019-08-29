@@ -44,10 +44,10 @@ namespace RobotControlWin
             //通讯协议
             tcclient = new TcAdsClient();
             tcclient.Connect(851);
-            //System.Timers.Timer timer = new System.Timers.Timer(100);
-            //timer.AutoReset = true;
-            //timer.Elapsed += DataUpdate;
-            //timer.Start();
+            System.Timers.Timer timer = new System.Timers.Timer(100);
+            timer.AutoReset = true;
+            timer.Elapsed += DataUpdate;
+            timer.Start();
 
             //写入句柄的结构体
             variables.indexGroup = (int)AdsReservedIndexGroups.SymbolValueByHandle;
@@ -143,34 +143,34 @@ namespace RobotControlWin
 
         private void DataUpdate(object sender, ElapsedEventArgs e)
         {
-            //double[] ActualAngle = new double[6];
-            //double[] ActualPos = new double[3];
-            //int hvar = new int(); //定义句柄变量
-            //for (int i = 0; i < 6; i++)
-            //{
-            //    string str = $"GVL.OutActPos[{i}]";
-            //    hvar = tcclient.CreateVariableHandle(str);
-            //    ActualAngle[i] = (double)(tcclient.ReadAny(hvar, typeof(double)));
-            //    tcclient.DeleteVariableHandle(hvar);
-            //}
-            //for (int i = 0; i < 3; i++)
-            //{
-            //    string str = $"GVL.Pos_Now[{i}]";
-            //    hvar = tcclient.CreateVariableHandle(str);
-            //    ActualPos[i] = (double)(tcclient.ReadAny(hvar, typeof(double)));
-            //    tcclient.DeleteVariableHandle(hvar);
-            //}
-            //Application.Current.Dispatcher.Invoke(new Action(() => 
-            //{
-            //    string anglestr = null;
-            //    for (int i = 0; i < 6; i++) 
-            //        anglestr += ActualAngle[i].ToString("F4") + Environment.NewLine;
+            double[] ActualAngle = new double[6];
+            double[] ActualPos = new double[3];
+            int hvar = new int(); //定义句柄变量
+            for (int i = 0; i < 6; i++)
+            {
+                string str = $"GVL.OutActPos[{i}]";
+                hvar = tcclient.CreateVariableHandle(str);
+                ActualAngle[i] = (double)(tcclient.ReadAny(hvar, typeof(double)));
+                tcclient.DeleteVariableHandle(hvar);
+            }
+            for (int i = 0; i < 3; i++)
+            {
+                string str = $"GVL.Pos_Now[{i}]";
+                hvar = tcclient.CreateVariableHandle(str);
+                ActualPos[i] = (double)(tcclient.ReadAny(hvar, typeof(double)));
+                tcclient.DeleteVariableHandle(hvar);
+            }
+            Application.Current.Dispatcher.Invoke(new Action(() =>
+            {
+                string anglestr = null;
+                for (int i = 0; i < 6; i++)
+                    anglestr += ActualAngle[i].ToString("F4") + Environment.NewLine;
 
-            //    anglestr += Environment.NewLine;
-            //    for (int i = 0; i < 3; i++)
-            //        anglestr += ActualPos[i].ToString("F4") + Environment.NewLine;
-            //    DataFromPLC.Text = anglestr;
-            //}));
+                anglestr += Environment.NewLine;
+                for (int i = 0; i < 3; i++)
+                    anglestr += ActualPos[i].ToString("F4") + Environment.NewLine;
+                DataFromPLC.Text = anglestr;
+            }));
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -255,40 +255,46 @@ namespace RobotControlWin
                 int num = 0;
                 for(double i = 0;i<Time[((strarray.Length - 1) / 7)-1];i+=0.002)
                     Joint_states[num++,0] = sp.Interpolate(i);
-                for (int i = num; i < 5000; i++)
+                for (int i = num; i < num + 10; i++)
                     Joint_states[i, 0] = sp.Interpolate(Time[((strarray.Length - 1) / 7) - 1]);
 
                 sp.Init(Time, Joint1);num = 0;
                 for (double i = 0; i < Time[((strarray.Length - 1) / 7) - 1]; i += 0.002)
                     Joint_states[num++, 1] = sp.Interpolate(i);
-                for (int i = num; i < 5000; i++)
+                for (int i = num; i < num + 10; i++)
                     Joint_states[i, 1] = sp.Interpolate(Time[((strarray.Length - 1) / 7) - 1]);
 
                 sp.Init(Time, Joint2);num = 0;
                 for (double i = 0; i < Time[((strarray.Length - 1) / 7) - 1]; i += 0.002)
                     Joint_states[num++, 2] = sp.Interpolate(i);
-                for (int i = num; i < 5000; i++)
+                for (int i = num; i < num + 10; i++)
                     Joint_states[i, 2] = sp.Interpolate(Time[((strarray.Length - 1) / 7) - 1]);
 
                 sp.Init(Time, Joint3);num = 0;
                 for (double i = 0; i < Time[((strarray.Length - 1) / 7) - 1]; i += 0.002)
                     Joint_states[num++, 3] = sp.Interpolate(i);
-                for (int i = num; i < 5000; i++)
+                for (int i = num; i < num + 10; i++)
                     Joint_states[i, 3] = sp.Interpolate(Time[((strarray.Length - 1) / 7) - 1]);
 
                 sp.Init(Time, Joint4);num = 0;
                 for (double i = 0; i < Time[((strarray.Length - 1) / 7) - 1]; i += 0.002)
                     Joint_states[num++, 4] = sp.Interpolate(i);
-                for (int i = num; i < 5000; i++)
+                for (int i = num; i < num + 10; i++)
                     Joint_states[i, 4] = sp.Interpolate(Time[((strarray.Length - 1) / 7) - 1]);
 
                 sp.Init(Time, Joint5);num = 0;
                 for (double i = 0; i < Time[((strarray.Length - 1) / 7) - 1]; i += 0.002)
                     Joint_states[num++, 5] = sp.Interpolate(i);
-                for (int i = num; i < 5000; i++)
+                for (int i = num; i < num + 10; i++)
                     Joint_states[i, 5] = sp.Interpolate(Time[((strarray.Length - 1) / 7) - 1]);
+
+                Joint_states[4999, 5] = num;
                 //同步到TwinCAT
                 BinaryReader reader = new BinaryReader(BlockWrite(variables, Joint_states));
+
+                int hvar = new int();
+                hvar = tcclient.CreateVariableHandle("MAIN.CurrentJob");
+                tcclient.WriteAny(hvar, (short)2);
                 //sw.Stop();
                 //TimeSpan ts = sw.Elapsed;
                 //Console.WriteLine("DateTime costed for Shuffle function is: {0}ms", ts.TotalMilliseconds);
