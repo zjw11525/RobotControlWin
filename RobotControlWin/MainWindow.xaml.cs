@@ -140,11 +140,22 @@ namespace RobotControlWin
                 })));
             }
         }
+        public void Publish(string topic, string inputString)
+        {
+            if (string.IsNullOrEmpty(topic))
+            {
+                //Console.WriteLine("发布主题不能为空！");
+                return;
+            }
 
+            var appMsg = new MqttApplicationMessage(topic, Encoding.UTF8.GetBytes(inputString), MqttQualityOfServiceLevel.AtMostOnce, false);
+            mqttClient.PublishAsync(appMsg);
+            //Console.WriteLine("发送中...");
+        }
         private void DataUpdate(object sender, ElapsedEventArgs e)
         {
-            double[] ActualAngle = new double[6];
-            double[] ActualPos = new double[3];
+            double[] ActualAngle = new double[7];
+            //double[] ActualPos = new double[3];
             int hvar = new int(); //定义句柄变量
             for (int i = 0; i < 6; i++)
             {
@@ -153,23 +164,30 @@ namespace RobotControlWin
                 ActualAngle[i] = (double)(tcclient.ReadAny(hvar, typeof(double)));
                 tcclient.DeleteVariableHandle(hvar);
             }
-            for (int i = 0; i < 3; i++)
-            {
-                string str = $"GVL.Pos_Now[{i}]";
-                hvar = tcclient.CreateVariableHandle(str);
-                ActualPos[i] = (double)(tcclient.ReadAny(hvar, typeof(double)));
-                tcclient.DeleteVariableHandle(hvar);
-            }
+
+            string str1 = "MAIN.EcdPos";
+            hvar = tcclient.CreateVariableHandle(str1);
+            ActualAngle[6] = (int)(tcclient.ReadAny(hvar, typeof(int)));
+            tcclient.DeleteVariableHandle(hvar);
+            //for (int i = 0; i < 3; i++)
+            //{
+            //    string str = $"GVL.Pos_Now[{i}]";
+            //    hvar = tcclient.CreateVariableHandle(str);
+            //    ActualPos[i] = (double)(tcclient.ReadAny(hvar, typeof(double)));
+            //    tcclient.DeleteVariableHandle(hvar);
+            //}
             Application.Current.Dispatcher.Invoke(new Action(() =>
             {
                 string anglestr = null;
-                for (int i = 0; i < 6; i++)
+                for (int i = 0; i < 7; i++)
                     anglestr += ActualAngle[i].ToString("F4") + Environment.NewLine;
 
-                anglestr += Environment.NewLine;
-                for (int i = 0; i < 3; i++)
-                    anglestr += ActualPos[i].ToString("F4") + Environment.NewLine;
+                //anglestr += Environment.NewLine;
+                //for (int i = 0; i < 3; i++)
+                //    anglestr += ActualPos[i].ToString("F4") + Environment.NewLine;
                 DataFromPLC.Text = anglestr;
+                //发到ros
+                Publish("/joint_states_real", anglestr);
             }));
         }
 
@@ -185,7 +203,7 @@ namespace RobotControlWin
                 MQTT.AppendText("已连接到MQTT服务器！" + Environment.NewLine);
             })));
 
-            string topic = "/ros_joint_states";
+            string topic = "/ros_planned_path";
 
             if (!mqttClient.IsConnected)
             {
@@ -219,82 +237,93 @@ namespace RobotControlWin
 
                 str = Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
 
+                int hvar = new int();
+
                 string[] strarray = str.Split(',');
 
-                str = null;
-
-                double[] Time   = new double[(strarray.Length - 1) / 7];
-                double[] Joint0 = new double[(strarray.Length - 1) / 7];
-                double[] Joint1 = new double[(strarray.Length - 1) / 7];
-                double[] Joint2 = new double[(strarray.Length - 1) / 7];
-                double[] Joint3 = new double[(strarray.Length - 1) / 7];
-                double[] Joint4 = new double[(strarray.Length - 1) / 7];
-                double[] Joint5 = new double[(strarray.Length - 1) / 7];
-
-                for (int i = 0; i < (strarray.Length - 1) / 7; i++)
+                if ((strarray.Length == 2) && (string.Compare(strarray[0], "gripper_set") == 0))
                 {
-                    Time[i]   = Convert.ToDouble(strarray[i * 7]) / 1000.0;
-                    Joint0[i] = Convert.ToDouble(strarray[i * 7 + 1]);
-                    Joint1[i] = Convert.ToDouble(strarray[i * 7 + 2]);
-                    Joint2[i] = Convert.ToDouble(strarray[i * 7 + 3]);
-                    Joint3[i] = Convert.ToDouble(strarray[i * 7 + 4]);
-                    Joint4[i] = Convert.ToDouble(strarray[i * 7 + 5]);
-                    Joint5[i] = Convert.ToDouble(strarray[i * 7 + 6]);
+                    int GripperValue = Convert.ToInt16(strarray[1]);
 
-                    str += Time[i].ToString() + "  " + Joint0[i].ToString() + "  " + Joint1[i].ToString() + 
-                           "  " + Joint2[i].ToString() + "  " +Joint3[i].ToString() + 
-                           "  " + Joint4[i].ToString() + "  " + Joint5[i].ToString() + Environment.NewLine;
+                    hvar = tcclient.CreateVariableHandle("MAIN.ABSamount");
+                    tcclient.WriteAny(hvar, (uint)GripperValue);
                 }
-                MQTT.Text = str;
-                //三次样条插补
-                //System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-                //sw.Start();
+                else
+                {
+                    str = null;
 
-                SPLine sp = new SPLine();
-                sp.Init(Time, Joint0);
-                int num = 0;
-                for(double i = 0;i<Time[((strarray.Length - 1) / 7)-1];i+=0.002)
-                    Joint_states[num++,0] = sp.Interpolate(i);
-                for (int i = num; i < num + 10; i++)
-                    Joint_states[i, 0] = sp.Interpolate(Time[((strarray.Length - 1) / 7) - 1]);
+                    double[] Time = new double[(strarray.Length - 1) / 7];
+                    double[] Joint0 = new double[(strarray.Length - 1) / 7];
+                    double[] Joint1 = new double[(strarray.Length - 1) / 7];
+                    double[] Joint2 = new double[(strarray.Length - 1) / 7];
+                    double[] Joint3 = new double[(strarray.Length - 1) / 7];
+                    double[] Joint4 = new double[(strarray.Length - 1) / 7];
+                    double[] Joint5 = new double[(strarray.Length - 1) / 7];
 
-                sp.Init(Time, Joint1);num = 0;
-                for (double i = 0; i < Time[((strarray.Length - 1) / 7) - 1]; i += 0.002)
-                    Joint_states[num++, 1] = sp.Interpolate(i);
-                for (int i = num; i < num + 10; i++)
-                    Joint_states[i, 1] = sp.Interpolate(Time[((strarray.Length - 1) / 7) - 1]);
+                    for (int i = 0; i < (strarray.Length - 1) / 7; i++)
+                    {
+                        Time[i] = Convert.ToDouble(strarray[i * 7]) / 1000.0;
+                        Joint0[i] = Convert.ToDouble(strarray[i * 7 + 1]);
+                        Joint1[i] = Convert.ToDouble(strarray[i * 7 + 2]);
+                        Joint2[i] = Convert.ToDouble(strarray[i * 7 + 3]);
+                        Joint3[i] = Convert.ToDouble(strarray[i * 7 + 4]);
+                        Joint4[i] = Convert.ToDouble(strarray[i * 7 + 5]);
+                        Joint5[i] = Convert.ToDouble(strarray[i * 7 + 6]);
 
-                sp.Init(Time, Joint2);num = 0;
-                for (double i = 0; i < Time[((strarray.Length - 1) / 7) - 1]; i += 0.002)
-                    Joint_states[num++, 2] = sp.Interpolate(i);
-                for (int i = num; i < num + 10; i++)
-                    Joint_states[i, 2] = sp.Interpolate(Time[((strarray.Length - 1) / 7) - 1]);
+                        str += Time[i].ToString() + "  " + Joint0[i].ToString() + "  " + Joint1[i].ToString() +
+                               "  " + Joint2[i].ToString() + "  " + Joint3[i].ToString() +
+                               "  " + Joint4[i].ToString() + "  " + Joint5[i].ToString() + Environment.NewLine;
+                    }
+                    MQTT.Text = str;
+                    //三次样条插补
+                    //System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+                    //sw.Start();
 
-                sp.Init(Time, Joint3);num = 0;
-                for (double i = 0; i < Time[((strarray.Length - 1) / 7) - 1]; i += 0.002)
-                    Joint_states[num++, 3] = sp.Interpolate(i);
-                for (int i = num; i < num + 10; i++)
-                    Joint_states[i, 3] = sp.Interpolate(Time[((strarray.Length - 1) / 7) - 1]);
+                    SPLine sp = new SPLine();
+                    sp.Init(Time, Joint0);
+                    int num = 0;
+                    for (double i = 0; i < Time[((strarray.Length - 1) / 7) - 1]; i += 0.002)
+                        Joint_states[num++, 0] = sp.Interpolate(i);
+                    for (int i = num; i < num + 10; i++)
+                        Joint_states[i, 0] = sp.Interpolate(Time[((strarray.Length - 1) / 7) - 1]);
 
-                sp.Init(Time, Joint4);num = 0;
-                for (double i = 0; i < Time[((strarray.Length - 1) / 7) - 1]; i += 0.002)
-                    Joint_states[num++, 4] = sp.Interpolate(i);
-                for (int i = num; i < num + 10; i++)
-                    Joint_states[i, 4] = sp.Interpolate(Time[((strarray.Length - 1) / 7) - 1]);
+                    sp.Init(Time, Joint1); num = 0;
+                    for (double i = 0; i < Time[((strarray.Length - 1) / 7) - 1]; i += 0.002)
+                        Joint_states[num++, 1] = sp.Interpolate(i);
+                    for (int i = num; i < num + 10; i++)
+                        Joint_states[i, 1] = sp.Interpolate(Time[((strarray.Length - 1) / 7) - 1]);
 
-                sp.Init(Time, Joint5);num = 0;
-                for (double i = 0; i < Time[((strarray.Length - 1) / 7) - 1]; i += 0.002)
-                    Joint_states[num++, 5] = sp.Interpolate(i);
-                for (int i = num; i < num + 10; i++)
-                    Joint_states[i, 5] = sp.Interpolate(Time[((strarray.Length - 1) / 7) - 1]);
+                    sp.Init(Time, Joint2); num = 0;
+                    for (double i = 0; i < Time[((strarray.Length - 1) / 7) - 1]; i += 0.002)
+                        Joint_states[num++, 2] = sp.Interpolate(i);
+                    for (int i = num; i < num + 10; i++)
+                        Joint_states[i, 2] = sp.Interpolate(Time[((strarray.Length - 1) / 7) - 1]);
 
-                Joint_states[4999, 5] = num;
-                //同步到TwinCAT
-                BinaryReader reader = new BinaryReader(BlockWrite(variables, Joint_states));
+                    sp.Init(Time, Joint3); num = 0;
+                    for (double i = 0; i < Time[((strarray.Length - 1) / 7) - 1]; i += 0.002)
+                        Joint_states[num++, 3] = sp.Interpolate(i);
+                    for (int i = num; i < num + 10; i++)
+                        Joint_states[i, 3] = sp.Interpolate(Time[((strarray.Length - 1) / 7) - 1]);
 
-                int hvar = new int();
-                hvar = tcclient.CreateVariableHandle("MAIN.CurrentJob");
-                tcclient.WriteAny(hvar, (short)2);
+                    sp.Init(Time, Joint4); num = 0;
+                    for (double i = 0; i < Time[((strarray.Length - 1) / 7) - 1]; i += 0.002)
+                        Joint_states[num++, 4] = sp.Interpolate(i);
+                    for (int i = num; i < num + 10; i++)
+                        Joint_states[i, 4] = sp.Interpolate(Time[((strarray.Length - 1) / 7) - 1]);
+
+                    sp.Init(Time, Joint5); num = 0;
+                    for (double i = 0; i < Time[((strarray.Length - 1) / 7) - 1]; i += 0.002)
+                        Joint_states[num++, 5] = sp.Interpolate(i);
+                    for (int i = num; i < num + 10; i++)
+                        Joint_states[i, 5] = sp.Interpolate(Time[((strarray.Length - 1) / 7) - 1]);
+
+                    Joint_states[4999, 5] = num;
+                    //同步到TwinCAT
+                    BinaryReader reader = new BinaryReader(BlockWrite(variables, Joint_states));
+
+                    hvar = tcclient.CreateVariableHandle("MAIN.CurrentJob");
+                    tcclient.WriteAny(hvar, (short)2);
+                }
                 //sw.Stop();
                 //TimeSpan ts = sw.Elapsed;
                 //Console.WriteLine("DateTime costed for Shuffle function is: {0}ms", ts.TotalMilliseconds);
